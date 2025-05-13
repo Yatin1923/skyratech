@@ -44,7 +44,7 @@ export const Navbar = () => {
       {hasDropdown && <ChevronDownIcon />}
       {!hasDropdown && (
         <motion.div
-          className="absolute bottom-[-2px] left-0 right-0 h-[1px] bg-[#0CF2A0]"
+          className="absolute bottom-[-2px] left-0 right-0 h-[1px] bg-[var(--primary)]"
           variants={{
             initial: { scaleX: 0, originX: 0.5 },
             hover: { scaleX: 1, originX: 0.5 },
@@ -139,15 +139,15 @@ export const Navbar = () => {
     >
       <nav className="flex justify-between items-center h-[70px]">
         <div className="text-[#fff] ">
-                <TextParticle
+                {/* <TextParticle
                 text="Skyratech."
                 fontSize={40}
-                // particleColor="var(--primary)"
+                particleColor="#0CF2A0"
                 particleSize={1}
                 className="hidden md:block"
                 particleDensity={1}
-            />
-            <span className="text-xl md:hidden text-[var(--primary)] font-bold ml-2">
+            /> */}
+            <span className="text-3xl text-[var(--primary)] font-bold ml-2">
             Skyratech.
           </span>
             </div>

@@ -1,5 +1,4 @@
 "use client";
-
 import React, {
   useEffect,
   useRef,
@@ -10,7 +9,6 @@ import React, {
   useMemo,
   type ReactNode,
   type MouseEvent as ReactMouseEvent,
-  type FormEvent,
   type SVGProps,
 } from "react";
 import {
@@ -26,6 +24,8 @@ import {
   type Variants,
 } from "framer-motion";
 import { Typewriter } from "../ui/typewriter";
+import { CTAButton } from "../ui/flow-button";
+import ParticlesBackground from "../ui/particles-background";
 
 function cn(...classes: (string | undefined | null | boolean)[]): string {
   return classes.filter(Boolean).join(" ");
@@ -37,299 +37,6 @@ interface RotatingTextRef {
   jumpTo: (index: number) => void;
   reset: () => void;
 }
-
-interface RotatingTextProps
-  extends Omit<
-    React.ComponentPropsWithoutRef<typeof motion.span>,
-    "children" | "transition" | "initial" | "animate" | "exit"
-  > {
-  texts: string[];
-  transition?: Transition;
-  initial?: boolean | Target | VariantLabels;
-  animate?: boolean | VariantLabels | AnimationControls | TargetAndTransition;
-  exit?: Target | VariantLabels;
-  animatePresenceMode?: "sync" | "wait";
-  animatePresenceInitial?: boolean;
-  rotationInterval?: number;
-  staggerDuration?: number;
-  staggerFrom?: "first" | "last" | "center" | "random" | number;
-  loop?: boolean;
-  auto?: boolean;
-  splitBy?: "characters" | "words" | "lines" | string;
-  onNext?: (index: number) => void;
-  mainClassName?: string;
-  splitLevelClassName?: string;
-  elementLevelClassName?: string;
-}
-
-const RotatingText = forwardRef<RotatingTextRef, RotatingTextProps>(
-  (
-    {
-      texts,
-      transition = { type: "spring", damping: 25, stiffness: 300 },
-      initial = { y: "100%", opacity: 0 },
-      animate = { y: 0, opacity: 1 },
-      exit = { y: "-120%", opacity: 0 },
-      animatePresenceMode = "wait",
-      animatePresenceInitial = false,
-      rotationInterval = 2200,
-      staggerDuration = 0.01,
-      staggerFrom = "last",
-      loop = true,
-      auto = true,
-      splitBy = "characters",
-      onNext,
-      mainClassName,
-      splitLevelClassName,
-      elementLevelClassName,
-      ...rest
-    },
-    ref
-  ) => {
-    const [currentTextIndex, setCurrentTextIndex] = useState<number>(0);
-
-    const splitIntoCharacters = (text: string): string[] => {
-      if (typeof Intl !== "undefined" && Intl.Segmenter) {
-        try {
-          const segmenter = new Intl.Segmenter("en", {
-            granularity: "grapheme",
-          });
-          return Array.from(
-            segmenter.segment(text),
-            (segment) => segment.segment
-          );
-        } catch (error) {
-          console.error(
-            "Intl.Segmenter failed, falling back to simple split:",
-            error
-          );
-          return text.split("");
-        }
-      }
-      return text.split("");
-    };
-
-    const elements = useMemo(() => {
-      const currentText: string = texts[currentTextIndex] ?? "";
-      if (splitBy === "characters") {
-        const words = currentText.split(/(\s+)/);
-        let charCount = 0;
-        return words
-          .filter((part) => part.length > 0)
-          .map((part) => {
-            const isSpace = /^\s+$/.test(part);
-            const chars = isSpace ? [part] : splitIntoCharacters(part);
-            const startIndex = charCount;
-            charCount += chars.length;
-            return {
-              characters: chars,
-              isSpace: isSpace,
-              startIndex: startIndex,
-            };
-          });
-      }
-      if (splitBy === "words") {
-        return currentText
-          .split(/(\s+)/)
-          .filter((word) => word.length > 0)
-          .map((word, i) => ({
-            characters: [word],
-            isSpace: /^\s+$/.test(word),
-            startIndex: i,
-          }));
-      }
-      if (splitBy === "lines") {
-        return currentText.split("\n").map((line, i) => ({
-          characters: [line],
-          isSpace: false,
-          startIndex: i,
-        }));
-      }
-      return currentText.split(splitBy).map((part, i) => ({
-        characters: [part],
-        isSpace: false,
-        startIndex: i,
-      }));
-    }, [texts, currentTextIndex, splitBy]);
-
-    const totalElements = useMemo(
-      () => elements.reduce((sum, el) => sum + el.characters.length, 0),
-      [elements]
-    );
-
-    const getStaggerDelay = useCallback(
-      (index: number, total: number): number => {
-        if (total <= 1 || !staggerDuration) return 0;
-        const stagger = staggerDuration;
-        switch (staggerFrom) {
-          case "first":
-            return index * stagger;
-          case "last":
-            return (total - 1 - index) * stagger;
-          case "center":
-            const center = (total - 1) / 2;
-            return Math.abs(center - index) * stagger;
-          case "random":
-            return Math.random() * (total - 1) * stagger;
-          default:
-            if (typeof staggerFrom === "number") {
-              const fromIndex = Math.max(0, Math.min(staggerFrom, total - 1));
-              return Math.abs(fromIndex - index) * stagger;
-            }
-            return index * stagger;
-        }
-      },
-      [staggerFrom, staggerDuration]
-    );
-
-    const handleIndexChange = useCallback(
-      (newIndex: number) => {
-        setCurrentTextIndex(newIndex);
-        onNext?.(newIndex);
-      },
-      [onNext]
-    );
-
-    const next = useCallback(() => {
-      const nextIndex =
-        currentTextIndex === texts.length - 1
-          ? loop
-            ? 0
-            : currentTextIndex
-          : currentTextIndex + 1;
-      if (nextIndex !== currentTextIndex) handleIndexChange(nextIndex);
-    }, [currentTextIndex, texts.length, loop, handleIndexChange]);
-
-    const previous = useCallback(() => {
-      const prevIndex =
-        currentTextIndex === 0
-          ? loop
-            ? texts.length - 1
-            : currentTextIndex
-          : currentTextIndex - 1;
-      if (prevIndex !== currentTextIndex) handleIndexChange(prevIndex);
-    }, [currentTextIndex, texts.length, loop, handleIndexChange]);
-
-    const jumpTo = useCallback(
-      (index: number) => {
-        const validIndex = Math.max(0, Math.min(index, texts.length - 1));
-        if (validIndex !== currentTextIndex) handleIndexChange(validIndex);
-      },
-      [texts.length, currentTextIndex, handleIndexChange]
-    );
-
-    const reset = useCallback(() => {
-      if (currentTextIndex !== 0) handleIndexChange(0);
-    }, [currentTextIndex, handleIndexChange]);
-
-    useImperativeHandle(ref, () => ({ next, previous, jumpTo, reset }), [
-      next,
-      previous,
-      jumpTo,
-      reset,
-    ]);
-
-    useEffect(() => {
-      if (!auto || texts.length <= 1) return;
-      const intervalId = setInterval(next, rotationInterval);
-      return () => clearInterval(intervalId);
-    }, [next, rotationInterval, auto, texts.length]);
-
-    return (
-      <motion.span
-        className={cn(
-          "inline-flex flex-wrap whitespace-pre-wrap relative align-bottom pb-[10px]",
-          mainClassName
-        )}
-        {...rest}
-        layout
-      >
-        <span className="sr-only">{texts[currentTextIndex]}</span>
-        <AnimatePresence
-          mode={animatePresenceMode}
-          initial={animatePresenceInitial}
-        >
-          <motion.div
-            key={currentTextIndex}
-            className={cn(
-              "inline-flex flex-wrap relative",
-              splitBy === "lines"
-                ? "flex-col items-start w-full"
-                : "flex-row items-baseline"
-            )}
-            layout
-            aria-hidden="true"
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            {elements.map((elementObj, elementIndex) => (
-              <span
-                key={elementIndex}
-                className={cn(
-                  "inline-flex",
-                  splitBy === "lines" ? "w-full" : "",
-                  splitLevelClassName
-                )}
-                style={{ whiteSpace: "pre" }}
-              >
-                {elementObj.characters.map((char, charIndex) => {
-                  const globalIndex = elementObj.startIndex + charIndex;
-                  return (
-                    <motion.span
-                      key={`${char}-${charIndex}`}
-                      initial={initial}
-                      animate={animate}
-                      exit={exit}
-                      transition={{
-                        ...transition,
-                        delay: getStaggerDelay(globalIndex, totalElements),
-                      }}
-                      className={cn(
-                        "inline-block leading-none tracking-tight",
-                        elementLevelClassName
-                      )}
-                    >
-                      {char === " " ? "\u00A0" : char}
-                    </motion.span>
-                  );
-                })}
-              </span>
-            ))}
-          </motion.div>
-        </AnimatePresence>
-      </motion.span>
-    );
-  }
-);
-RotatingText.displayName = "RotatingText";
-
-const ShinyText: React.FC<{ text: string; className?: string }> = ({
-  text,
-  className = "",
-}) => (
-  <span className={cn("relative overflow-hidden inline-block", className)}>
-    {text}
-    <span
-      style={{
-        position: "absolute",
-        inset: 0,
-        background:
-          "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)",
-        animation: "shine 2s infinite linear",
-        opacity: 0.5,
-        pointerEvents: "none",
-      }}
-    ></span>
-    <style>{`
-            @keyframes shine {
-                0% { transform: translateX(-100%); }
-                100% { transform: translateX(100%); }
-            }
-        `}</style>
-  </span>
-);
-
 const ChevronDownIcon: React.FC<SVGProps<SVGSVGElement>> = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -347,153 +54,6 @@ const ChevronDownIcon: React.FC<SVGProps<SVGSVGElement>> = (props) => (
     />
   </svg>
 );
-
-const MenuIcon: React.FC<SVGProps<SVGSVGElement>> = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth={1.5}
-    stroke="currentColor"
-    className="w-6 h-6"
-    {...props}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-    />
-  </svg>
-);
-
-const CloseIcon: React.FC<SVGProps<SVGSVGElement>> = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth={1.5}
-    stroke="currentColor"
-    className="w-6 h-6"
-    {...props}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M6 18 18 6M6 6l12 12"
-    />
-  </svg>
-);
-
-const ExternalLinkIcon: React.FC<SVGProps<SVGSVGElement>> = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth={1.5}
-    stroke="currentColor"
-    className="w-4 h-4 ml-1 opacity-70 group-hover:opacity-100 transition-opacity"
-    {...props}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-    />
-  </svg>
-);
-
-interface NavLinkProps {
-  href?: string;
-  children: ReactNode;
-  hasDropdown?: boolean;
-  className?: string;
-  onClick?: (event: ReactMouseEvent<HTMLAnchorElement>) => void;
-}
-
-const NavLink: React.FC<NavLinkProps> = ({
-  href = "#",
-  children,
-  hasDropdown = false,
-  className = "",
-  onClick,
-}) => (
-  <motion.a
-    href={href}
-    onClick={onClick}
-    className={cn(
-      "relative group text-3xl font-medium text-gray-300 hover:text-white transition-colors duration-200 flex items-center py-1",
-      className
-    )}
-    whileHover="hover"
-  >
-    {children}
-    {hasDropdown && <ChevronDownIcon />}
-    {!hasDropdown && (
-      <motion.div
-        className="absolute bottom-[-2px] left-0 right-0 h-[1px] bg-[var(--primary)]"
-        variants={{
-          initial: { scaleX: 0, originX: 0.5 },
-          hover: { scaleX: 1, originX: 0.5 },
-        }}
-        initial="initial"
-        transition={{ duration: 0.3, ease: "easeOut" }}
-      />
-    )}
-  </motion.a>
-);
-
-interface DropdownMenuProps {
-  children: ReactNode;
-  isOpen: boolean;
-}
-
-const DropdownMenu: React.FC<DropdownMenuProps> = ({ children, isOpen }) => (
-  <AnimatePresence>
-    {isOpen && (
-      <motion.div
-        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{
-          opacity: 0,
-          y: 10,
-          scale: 0.95,
-          transition: { duration: 0.15 },
-        }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-        className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-56 origin-top z-40"
-      >
-        <div className="bg-[#111111] border border-gray-700/50 rounded-md shadow-xl p-2">
-          {children}
-        </div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
-
-interface DropdownItemProps {
-  href?: string;
-  children: ReactNode;
-  icon?: React.ReactElement<SVGProps<SVGSVGElement>>;
-}
-
-const DropdownItem: React.FC<DropdownItemProps> = ({
-  href = "#",
-  children,
-  icon,
-}) => (
-  <a
-    href={href}
-    className="group flex items-center justify-between w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-700/30 hover:text-white rounded-md transition-colors duration-150"
-  >
-    <span>{children}</span>
-    {icon &&
-      React.cloneElement(icon, {
-        className:
-          "w-4 h-4 ml-1 opacity-70 group-hover:opacity-100 transition-opacity",
-      })}
-  </a>
-);
-
 interface Dot {
   x: number;
   y: number;
@@ -861,69 +421,14 @@ const InteractiveHero: React.FC = () => {
             "linear-gradient(to bottom, transparent 0%, #111111 150%), radial-gradient(ellipse at center, transparent 0%,#111111 95%)",
         }}
       ></div>
-    {/* Navbar
-      <motion.header
-        variants={headerVariants}
-        initial="top"
-        animate={isScrolled ? "scrolled" : "top"}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="px-6 w-full md:px-0 fixed top-0 z-30 bg-transparent"
-      >
-        <nav className="flex justify-between items-center h-[70px]">
-          <div className="flex items-center flex-shrink-0">
-            <span className="text-xl font-bold text-white ml-2">Skyratech.</span>
-          </div>
-          <div className="flex items-center flex-shrink-0 space-x-4 lg:space-x-6">
-            <motion.button
-              className="text-gray-300 hover:text-white z-50"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Toggle menu"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              {isMobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
-            </motion.button>
-          </div>
-        </nav>
+    {/* <ParticlesBackground color="#fff"></ParticlesBackground> */}
 
-        <AnimatePresence>
-          {isMobileMenuOpen && (
-            <motion.div
-              key="mobile-menu"
-              variants={mobileMenuVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="fixed inset-0 bg-[#111111]/95 backdrop-blur-sm shadow-lg py-4 border-t border-gray-800/50 flex items-center justify-center"
-            >
-              <div className="flex flex-col items-center space-y-4 px-6">
-                <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>
-                  Product
-                </NavLink>
-                <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>
-                  Customers
-                </NavLink>
-                <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>
-                  Channels
-                </NavLink>
-                <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>
-                  Resources
-                </NavLink>
-                <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>
-                  Docs
-                </NavLink>
-                <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>
-                  Pricing
-                </NavLink>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.header> */}
-
-      <main className="flex-grow flex flex-col justify-center text-left px-4 pt-8 pb-16 relative z-10">
+      <main className="flex-grow flex flex-col justify-center  text-start px-4 pt-8 pb-16 relative z-10">
         <motion.h1 
-        className="text-4xl sm:text-5xl lg:text-[64px] font-semibold text-white leading-tight max-w-5xl mb-4"
+        variants={headlineVariants}
+        initial="hidden"
+        animate="visible"
+        className="text-4xl sm:text-5xl lg:text-[64px] font-semibold text-white leading-tight mb-4"
         >
           <p className="whitespace-pre-wrap">
             <span>{"Let's create something "}</span>
@@ -951,11 +456,20 @@ const InteractiveHero: React.FC = () => {
           variants={subHeadlineVariants}
           initial="hidden"
           animate="visible"
-          className="text-base sm:text-lg lg:text-xl text-gray-400 max-w-2xl mb-8"
+          className="text-base flex justify-center  sm:text-lg lg:text-xl text-gray-400 max-w-2xl mb-8"
         >
          Welcome to our world of endless imagination and boundless creativity. Together, let's embark on a remarkable journey where dreams become tangible realities.
         </motion.p>
+        <motion.div className=""
+         variants={subHeadlineVariants}
+         initial="hidden"
+         animate="visible"
+         >
+          <CTAButton text="What we do" />
+        </motion.div>
       </main>
+     
+
     </div>
   );
 };
