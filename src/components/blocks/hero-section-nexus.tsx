@@ -24,8 +24,9 @@ import {
   type Variants,
 } from "framer-motion";
 import { Typewriter } from "../ui/typewriter";
-import { CTAButton } from "../ui/flow-button";
+import { SkButton } from "../ui/flow-button";
 import ParticlesBackground from "../ui/particles-background";
+import { Squares } from "../ui/squares-background";
 
 function cn(...classes: (string | undefined | null | boolean)[]): string {
   return classes.filter(Boolean).join(" ");
@@ -275,7 +276,6 @@ const InteractiveHero: React.FC = () => {
 
   useEffect(() => {
     handleResize();
-    const canvasElement = canvasRef.current;
     const handleMouseLeave = () => {
       mousePositionRef.current = { x: null, y: null };
     };
@@ -309,42 +309,8 @@ const InteractiveHero: React.FC = () => {
       document.body.style.overflow = "unset";
     };
   }, [isMobileMenuOpen]);
-
-  const headerVariants: Variants = {
-    top: {
-      position: "fixed",
-      boxShadow: "none",
-    },
-    scrolled: {
-      position: "fixed",
-    },
-  };
-
-  const mobileMenuVariants: Variants = {
-    hidden: { opacity: 0, y: -20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.2, ease: "easeOut" },
-    },
-    exit: {
-      opacity: 0,
-      y: -20,
-      transition: { duration: 0.15, ease: "easeIn" },
-    },
-  };
-
   const contentDelay = 0.3;
   const itemDelayIncrement = 0.1;
-
-  const bannerVariants: Variants = {
-    hidden: { opacity: 0, y: -10 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.4, delay: contentDelay },
-    },
-  };
   const headlineVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
@@ -363,54 +329,21 @@ const InteractiveHero: React.FC = () => {
       },
     },
   };
-  const formVariants: Variants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        delay: contentDelay + itemDelayIncrement * 3,
-      },
-    },
-  };
-  const trialTextVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.5,
-        delay: contentDelay + itemDelayIncrement * 4,
-      },
-    },
-  };
-  const worksWithVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.5,
-        delay: contentDelay + itemDelayIncrement * 5,
-      },
-    },
-  };
-  const imageVariants: Variants = {
-    hidden: { opacity: 0, scale: 0.95, y: 20 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        delay: contentDelay + itemDelayIncrement * 6,
-        ease: [0.16, 1, 0.3, 1],
-      },
-    },
-  };
 
   return (
-    <div className="md:px-20 pt-[100px] relative bg-[#111111] text-gray-300 min-h-screen flex flex-col overflow-x-hidden ">
-      <canvas
+    <div className="relative bg-black min-h-screen w-full overflow-hidden">
+      <div className="absolute inset-0 bg-transparent z-11">
+        <Squares 
+          direction="diagonal"
+          speed={0.5}
+          squareSize={40}
+          borderColor="#333" 
+          hoverFillColor="#222"
+          className="pointer-events-auto bg-transparent"
+        />
+      </div>
+      <div className="relative md:px-20 pt-[100px] text-gray-300 min-h-screen flex flex-col overflow-x-hidden">
+      {/* <canvas
         ref={canvasRef}
         className="absolute inset-0 z-0 pointer-events-none opacity-100"
       />
@@ -420,17 +353,16 @@ const InteractiveHero: React.FC = () => {
           background:
             "linear-gradient(to bottom, transparent 0%, #111111 150%), radial-gradient(ellipse at center, transparent 0%,#111111 95%)",
         }}
-      ></div>
-    {/* <ParticlesBackground color="#fff"></ParticlesBackground> */}
-
-      <main className="flex-grow flex flex-col justify-center  text-start px-4 pt-8 pb-16 relative z-10">
+      ></div> */}
+     
+      <main className="flex-grow flex flex-col justify-center  text-start px-4 pt-8 pb-16 relative">
         <motion.h1 
         variants={headlineVariants}
         initial="hidden"
         animate="visible"
-        className="text-4xl sm:text-5xl lg:text-[64px] font-semibold text-white leading-tight mb-4"
+        className="text-4xl sm:text-5xl z-12 lg:text-[64px] font-semibold text-white leading-tight mb-4"
         >
-          <p className="whitespace-pre-wrap">
+          <p className="whitespace-pre-wrap z-12">
             <span>{"Let's create something "}</span>
           </p>
           <Typewriter
@@ -456,22 +388,24 @@ const InteractiveHero: React.FC = () => {
           variants={subHeadlineVariants}
           initial="hidden"
           animate="visible"
-          className="text-base flex justify-center  sm:text-lg lg:text-xl text-gray-400 max-w-2xl mb-8"
+          className="text-base z-12 flex justify-center  sm:text-lg lg:text-xl text-gray-400 max-w-2xl mb-8"
         >
          Welcome to our world of endless imagination and boundless creativity. Together, let's embark on a remarkable journey where dreams become tangible realities.
         </motion.p>
-        <motion.div className=""
+        <motion.div className="z-12"
          variants={subHeadlineVariants}
          initial="hidden"
          animate="visible"
          >
-          <CTAButton text="What we do" />
+          <SkButton text="What we do" />
         </motion.div>
       </main>
-     
-
+    </div>
     </div>
   );
 };
 
 export default InteractiveHero;
+
+
+

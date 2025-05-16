@@ -58,17 +58,17 @@ export const Navbar = () => {
 
   const headerVariants: Variants = {
     top: {
-      backgroundColor: "rgba(17, 17, 17, 0.8)",
-      borderBottomColor: "rgba(55, 65, 81, 0.5)",
+      // backgroundColor: "rgba(17, 17, 17, 0.8)",
+      // borderBottomColor: "rgba(55, 65, 81, 0.5)",
       position: "fixed",
       boxShadow: "none",
     },
     scrolled: {
-      backgroundColor: "rgba(17, 17, 17, 0.95)",
+      // backgroundColor:  "rgba(17, 17, 17, 0.95)",
       borderBottomColor: "rgba(75, 85, 99, 0.7)",
       boxShadow:
         "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-      position: "fixed",
+      // position: "fixed",
     },
   };
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
@@ -135,7 +135,7 @@ export const Navbar = () => {
       initial="top"
       animate={isScrolled ? "scrolled" : "top"}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="px-6 md:px-20 w-full md:px-0 fixed top-0 z-30 bg-transparent"
+      className="px-6 md:px-20 w-full top-0 z-30 bg-black"
     >
       <nav className="flex justify-between items-center h-[70px]">
         <div className="text-[#fff] ">

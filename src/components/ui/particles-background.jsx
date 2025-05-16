@@ -73,7 +73,7 @@ export function ParticlesBackground(props) {
             density: {
               enable: true,
             },
-            value: 50,
+            value: 100,
           },
           opacity: {
             value: 0.5,
@@ -94,7 +94,7 @@ export function ParticlesBackground(props) {
       return (
         <Particles
           id="tsparticles"
-          className="absolute"
+          className="absolute min-h-screen"
           particlesLoaded={particlesLoaded}
           //init={particlesInit}
         //   particlesLoaded={particlesLoaded}
