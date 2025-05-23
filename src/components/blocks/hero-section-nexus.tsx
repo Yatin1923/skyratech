@@ -1,314 +1,19 @@
 "use client";
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-  forwardRef,
-  useImperativeHandle,
-  useMemo,
-  type ReactNode,
-  type MouseEvent as ReactMouseEvent,
-  type SVGProps,
-} from "react";
-import {
-  motion,
-  AnimatePresence,
-  useScroll,
-  useMotionValueEvent,
-  type Transition,
-  type VariantLabels,
-  type Target,
-  type AnimationControls,
-  type TargetAndTransition,
-  type Variants,
-} from "framer-motion";
-import { Typewriter } from "../ui/typewriter";
-import { SkButton } from "../ui/flow-button";
-import ParticlesBackground from "../ui/particles-background";
+import React, { type MouseEvent as ReactMouseEvent } from "react";
+import { motion, useScroll, useTransform, type Variants } from "framer-motion";
 import { Squares } from "../ui/squares-background";
-
-function cn(...classes: (string | undefined | null | boolean)[]): string {
-  return classes.filter(Boolean).join(" ");
-}
-
-interface RotatingTextRef {
-  next: () => void;
-  previous: () => void;
-  jumpTo: (index: number) => void;
-  reset: () => void;
-}
-const ChevronDownIcon: React.FC<SVGProps<SVGSVGElement>> = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth={2}
-    stroke="currentColor"
-    className="w-3 h-3 ml-1 inline-block transition-transform duration-200 group-hover:rotate-180"
-    {...props}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="m19.5 8.25-7.5 7.5-7.5-7.5"
-    />
-  </svg>
-);
-interface Dot {
-  x: number;
-  y: number;
-  baseColor: string;
-  targetOpacity: number;
-  currentOpacity: number;
-  opacitySpeed: number;
-  baseRadius: number;
-  currentRadius: number;
-}
+import { SkButton } from "../ui/flow-button";
+import { Typewriter } from "../ui/typewriter";
+import { ArrowRight, Star } from "lucide-react";
 
 const InteractiveHero: React.FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationFrameId = useRef<number | null>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [isScrolled, setIsScrolled] = useState<boolean>(false);
-
-  const { scrollY } = useScroll();
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    setIsScrolled(latest > 10);
+  const heroCtn = React.useRef(null);
+  const {scrollYProgress} = useScroll({
+    target: heroCtn,
+    offset: ["start start", "end start"],
   });
-
-  const dotsRef = useRef<Dot[]>([]);
-  const gridRef = useRef<Record<string, number[]>>({});
-  const canvasSizeRef = useRef<{ width: number; height: number }>({
-    width: 0,
-    height: 0,
-  });
-  const mousePositionRef = useRef<{ x: number | null; y: number | null }>({
-    x: null,
-    y: null,
-  });
-
-  const DOT_SPACING = 25;
-  const BASE_OPACITY_MIN = 0.4;
-  const BASE_OPACITY_MAX = 0.5;
-  const BASE_RADIUS = 1;
-  const INTERACTION_RADIUS = 150;
-  const INTERACTION_RADIUS_SQ = INTERACTION_RADIUS * INTERACTION_RADIUS;
-  const OPACITY_BOOST = 0.6;
-  const RADIUS_BOOST = 2.5;
-  const GRID_CELL_SIZE = Math.max(50, Math.floor(INTERACTION_RADIUS / 1.5));
-
-  const handleMouseMove = useCallback((event: globalThis.MouseEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) {
-      mousePositionRef.current = { x: null, y: null };
-      return;
-    }
-    const rect = canvas.getBoundingClientRect();
-    const canvasX = event.clientX - rect.left;
-    const canvasY = event.clientY - rect.top;
-    mousePositionRef.current = { x: canvasX, y: canvasY };
-  }, []);
-
-  const createDots = useCallback(() => {
-    const { width, height } = canvasSizeRef.current;
-    if (width === 0 || height === 0) return;
-
-    const newDots: Dot[] = [];
-    const newGrid: Record<string, number[]> = {};
-    const cols = Math.ceil(width / DOT_SPACING);
-    const rows = Math.ceil(height / DOT_SPACING);
-
-    for (let i = 0; i < cols; i++) {
-      for (let j = 0; j < rows; j++) {
-        const x = i * DOT_SPACING + DOT_SPACING / 2;
-        const y = j * DOT_SPACING + DOT_SPACING / 2;
-        const cellX = Math.floor(x / GRID_CELL_SIZE);
-        const cellY = Math.floor(y / GRID_CELL_SIZE);
-        const cellKey = `${cellX}_${cellY}`;
-
-        if (!newGrid[cellKey]) {
-          newGrid[cellKey] = [];
-        }
-
-        const dotIndex = newDots.length;
-        newGrid[cellKey].push(dotIndex);
-
-        const baseOpacity =
-          Math.random() * (BASE_OPACITY_MAX - BASE_OPACITY_MIN) +
-          BASE_OPACITY_MIN;
-        newDots.push({
-          x,
-          y,
-          baseColor: `rgba(87, 220, 205, ${BASE_OPACITY_MAX})`,
-          targetOpacity: baseOpacity,
-          currentOpacity: baseOpacity,
-          opacitySpeed: Math.random() * 0.005 + 0.002,
-          baseRadius: BASE_RADIUS,
-          currentRadius: BASE_RADIUS,
-        });
-      }
-    }
-    dotsRef.current = newDots;
-    gridRef.current = newGrid;
-  }, [
-    DOT_SPACING,
-    GRID_CELL_SIZE,
-    BASE_OPACITY_MIN,
-    BASE_OPACITY_MAX,
-    BASE_RADIUS,
-  ]);
-
-  const handleResize = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const container = canvas.parentElement;
-    const width = container ? container.clientWidth : window.innerWidth;
-    const height = container ? container.clientHeight : window.innerHeight;
-
-    if (
-      canvas.width !== width ||
-      canvas.height !== height ||
-      canvasSizeRef.current.width !== width ||
-      canvasSizeRef.current.height !== height
-    ) {
-      canvas.width = width;
-      canvas.height = height;
-      canvasSizeRef.current = { width, height };
-      createDots();
-    }
-  }, [createDots]);
-
-  const animateDots = useCallback(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    const dots = dotsRef.current;
-    const grid = gridRef.current;
-    const { width, height } = canvasSizeRef.current;
-    const { x: mouseX, y: mouseY } = mousePositionRef.current;
-
-    if (!ctx || !dots || !grid || width === 0 || height === 0) {
-      animationFrameId.current = requestAnimationFrame(animateDots);
-      return;
-    }
-
-    ctx.clearRect(0, 0, width, height);
-
-    const activeDotIndices = new Set<number>();
-    if (mouseX !== null && mouseY !== null) {
-      const mouseCellX = Math.floor(mouseX / GRID_CELL_SIZE);
-      const mouseCellY = Math.floor(mouseY / GRID_CELL_SIZE);
-      const searchRadius = Math.ceil(INTERACTION_RADIUS / GRID_CELL_SIZE);
-      for (let i = -searchRadius; i <= searchRadius; i++) {
-        for (let j = -searchRadius; j <= searchRadius; j++) {
-          const checkCellX = mouseCellX + i;
-          const checkCellY = mouseCellY + j;
-          const cellKey = `${checkCellX}_${checkCellY}`;
-          if (grid[cellKey]) {
-            grid[cellKey].forEach((dotIndex) => activeDotIndices.add(dotIndex));
-          }
-        }
-      }
-    }
-
-    dots.forEach((dot, index) => {
-      dot.currentOpacity += dot.opacitySpeed;
-      if (
-        dot.currentOpacity >= dot.targetOpacity ||
-        dot.currentOpacity <= BASE_OPACITY_MIN
-      ) {
-        dot.opacitySpeed = -dot.opacitySpeed;
-        dot.currentOpacity = Math.max(
-          BASE_OPACITY_MIN,
-          Math.min(dot.currentOpacity, BASE_OPACITY_MAX)
-        );
-        dot.targetOpacity =
-          Math.random() * (BASE_OPACITY_MAX - BASE_OPACITY_MIN) +
-          BASE_OPACITY_MIN;
-      }
-
-      let interactionFactor = 0;
-      dot.currentRadius = dot.baseRadius;
-
-      if (mouseX !== null && mouseY !== null && activeDotIndices.has(index)) {
-        const dx = dot.x - mouseX;
-        const dy = dot.y - mouseY;
-        const distSq = dx * dx + dy * dy;
-
-        if (distSq < INTERACTION_RADIUS_SQ) {
-          const distance = Math.sqrt(distSq);
-          interactionFactor = Math.max(0, 1 - distance / INTERACTION_RADIUS);
-          interactionFactor = interactionFactor * interactionFactor;
-        }
-      }
-
-      const finalOpacity = Math.min(
-        1,
-        dot.currentOpacity + interactionFactor * OPACITY_BOOST
-      );
-      dot.currentRadius = dot.baseRadius + interactionFactor * RADIUS_BOOST;
-
-      const colorMatch = dot.baseColor.match(
-        /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/
-      );
-      const r = colorMatch ? colorMatch[1] : "87";
-      const g = colorMatch ? colorMatch[2] : "220";
-      const b = colorMatch ? colorMatch[3] : "205";
-
-      ctx.beginPath();
-      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity.toFixed(3)})`;
-      ctx.arc(dot.x, dot.y, dot.currentRadius, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    animationFrameId.current = requestAnimationFrame(animateDots);
-  }, [
-    GRID_CELL_SIZE,
-    INTERACTION_RADIUS,
-    INTERACTION_RADIUS_SQ,
-    OPACITY_BOOST,
-    RADIUS_BOOST,
-    BASE_OPACITY_MIN,
-    BASE_OPACITY_MAX,
-    BASE_RADIUS,
-  ]);
-
-  useEffect(() => {
-    handleResize();
-    const handleMouseLeave = () => {
-      mousePositionRef.current = { x: null, y: null };
-    };
-
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    window.addEventListener("resize", handleResize);
-    document.documentElement.addEventListener("mouseleave", handleMouseLeave);
-
-    animationFrameId.current = requestAnimationFrame(animateDots);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      window.removeEventListener("mousemove", handleMouseMove);
-      document.documentElement.removeEventListener(
-        "mouseleave",
-        handleMouseLeave
-      );
-      if (animationFrameId.current) {
-        cancelAnimationFrame(animationFrameId.current);
-      }
-    };
-  }, [handleResize, handleMouseMove, animateDots]);
-
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isMobileMenuOpen]);
+  const y = useTransform(scrollYProgress,[0,1],["0vh","-100vh"])
+  const x = useTransform(scrollYProgress,[0,1],["0vh","-100vw"])
   const contentDelay = 0.3;
   const itemDelayIncrement = 0.1;
   const headlineVariants: Variants = {
@@ -329,83 +34,156 @@ const InteractiveHero: React.FC = () => {
       },
     },
   };
-
+  const text = "Contact Us • Contact Us • Contact Us •";
+  const letters = text.split("");
+  const radius = 100;
   return (
-    <div className="relative bg-black min-h-screen w-full overflow-hidden">
+    <motion.div ref={heroCtn} className="bg-[#0D181C]">
       <div className="absolute inset-0 bg-transparent z-11">
-        <Squares 
+        <Squares
           direction="diagonal"
           speed={0.5}
           squareSize={40}
-          borderColor="#333" 
+          borderColor="#333"
           hoverFillColor="#222"
           className="pointer-events-auto bg-transparent"
         />
       </div>
       <div className="relative md:px-20 pt-[100px] text-gray-300 min-h-screen flex flex-col overflow-x-hidden">
-      {/* <canvas
-        ref={canvasRef}
-        className="absolute inset-0 z-0 pointer-events-none opacity-100"
-      />
-      <div
-        className="absolute inset-0 z-1 pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(to bottom, transparent 0%, #111111 150%), radial-gradient(ellipse at center, transparent 0%,#111111 95%)",
-        }}
-      ></div> */}
-     
-      <main className="flex-grow flex flex-col justify-center  text-start px-4 pt-8 pb-16 relative">
-        <motion.h1 
-        variants={headlineVariants}
-        initial="hidden"
-        animate="visible"
-        className="text-4xl sm:text-5xl z-12 lg:text-[64px] font-semibold text-white leading-tight mb-4"
-        >
-          <p className="whitespace-pre-wrap z-12">
-            <span>{"Let's create something "}</span>
-          </p>
-          <Typewriter
-            text={[
-              "innovative",
-              "groundbreaking",
-              "extraordinary",
-              "revolutionary",
-              "fun",
-              "that inspires others",
-              "that solves real problems",
-              "that changes perspectives",
-              "together",
-            ]}
-            speed={70}
-            className="text-[var(--primary)] mx-1"
-            waitTime={1500}
-            deleteSpeed={40}
-            cursorChar={"_"}
-          />
-        </motion.h1>
-        <motion.p
-          variants={subHeadlineVariants}
-          initial="hidden"
-          animate="visible"
-          className="text-base z-12 flex justify-center  sm:text-lg lg:text-xl text-gray-400 max-w-2xl mb-8"
-        >
-         Welcome to our world of endless imagination and boundless creativity. Together, let's embark on a remarkable journey where dreams become tangible realities.
-        </motion.p>
-        <motion.div className="z-12"
-         variants={subHeadlineVariants}
-         initial="hidden"
-         animate="visible"
-         >
-          <SkButton text="What we do" />
-        </motion.div>
-      </main>
-    </div>
-    </div>
+        <main className="flex-grow flex flex-col justify-center text-start px-4 pt-8 pb-16 relative">
+          <motion.div className="absolute top-50">
+            <motion.img src="images/banner-img.webp" />
+          </motion.div>
+          <motion.div className="z-12 flex">
+            <div>
+              <motion.h1
+                variants={headlineVariants}
+                initial="hidden"
+                animate="visible"
+                className="sm:text-4xl z-12 lg:text-8xl font-semibold text-white leading-tight mb-4"
+              >
+                <p className="whitespace-pre-wrap z-12">
+                  <span>{"Let's create something "}</span>
+                </p>
+                <Typewriter
+                  text={[
+                    "innovative",
+                    "groundbreaking",
+                    "extraordinary",
+                    "revolutionary",
+                    "fun",
+                    "that inspires others",
+                    "that solves real problems",
+                    "that changes perspectives",
+                    "together",
+                  ]}
+                  speed={70}
+                  className="text-[var(--primary)] mx-1"
+                  waitTime={1500}
+                  deleteSpeed={40}
+                  cursorChar={"_"}
+                />
+              </motion.h1>
+              <motion.p
+                variants={subHeadlineVariants}
+                initial="hidden"
+                animate="visible"
+                className="text-base z-12 flex justify-center  sm:text-lg lg:text-xl text-gray-400 max-w-2xl mb-8"
+              >
+                Welcome to our world of endless imagination and boundless
+                creativity. Together, let's embark on a remarkable journey where
+                dreams become tangible realities.
+              </motion.p>
+            </div>
+            <motion.a href="" style={{y}} className="relative w-[20vw] h-[20vw] mx-auto border-0 rounded-full">
+            <motion.div 
+              className="relative w-[20vw] h-[20vw] mx-auto"
+              animate={{ rotate: 360 }}
+              transition={{
+                repeat: Infinity,
+                duration: 20,
+                ease: "linear",
+              }}
+            >
+              {letters.map((char, i) => {
+                const angle = (360 / letters.length) * i;
+                const rad = (angle * Math.PI) / 180;
+                const x = Math.round(radius * Math.cos(rad) * 1000) / 1000;
+                const y = Math.round(radius * Math.sin(rad) * 1000) / 1000;
+
+                return (
+                  <span
+                    key={i}
+                    className="absolute text-sm"
+                    style={{
+                      left: `calc(50% + ${x}px)`,
+                      top: `calc(50% + ${y}px)`,
+                      transform: `translate(-50%, -50%) rotate(${
+                        angle + 90
+                      }deg)`,
+                      transformOrigin: "center",
+                    }}
+                  >
+                    {char}
+                  </span>
+                );
+              })}
+              
+            </motion.div>
+            <span
+                className="absolute text-2xl"
+                style={{
+                  left: "50%",
+                  top: "50%",
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                <Star
+                  className="absolute"
+                  size={32}
+                  style={{
+                    left: "50%",
+                    top: "50%",
+                    transform: "translate(-50%, -50%)",
+                    fill: "currentColor",
+                  }}
+                />
+              </span>
+            </motion.a>
+          </motion.div>
+
+          <motion.div
+            className="z-12"
+            variants={subHeadlineVariants}
+            initial="hidden"
+            animate="visible"
+
+            style={{x}}
+          >
+            <button className="group relative h-50 w-50 flex items-center gap-1 overflow-hidden rounded-full border-[1.5px] border-[#333333]/40 bg-transparent px-8 py-3 text-md font-semibold text-[var(--primary)] cursor-pointer transition-all duration-[1200ms] ease-[cubic-bezier(0.23,1,0.32,1)] hover:border-transparent hover:text-black active:scale-[0.95]">
+              {/* Left arrow (arr-2) */}
+              <ArrowRight className="absolute w-4 h-4 left-[-25%] stroke-[#111111] fill-none z-[9] group-hover:left-4 group-hover:stroke-black transition-all duration-[1200ms] ease-[cubic-bezier(0.34,1.56,0.64,1)]" />
+
+              {/* Text */}
+              <span className="relative z-[1] -translate-x-3 font-light  group-hover:translate-x-3 transition-all duration-[800ms] ease-out">
+                EXPLORE OUR SERVICES
+              </span>
+
+              {/* Circle */}
+              <span
+                className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-[50%] opacity-0 group-hover:w-screen group-hover:h-[220px] group-hover:opacity-100 transition-all duration-[1500ms] ease-[cubic-bezier(0.19,1,0.22,1)]`}
+              ></span>
+
+              {/* Right arrow (arr-1) */}
+              <ArrowRight
+                className={`absolute w-4 h-4 right-4 stroke-[var(--primary)] fill-none z-[9] group-hover:right-[-25%] group-hover:stroke-white transition-all duration-[1500ms] ease-[cubic-bezier(0.34,1.56,0.64,1)]`}
+              />
+            </button>
+          </motion.div>
+        </main>
+      </div>
+    </motion.div>
   );
 };
 
 export default InteractiveHero;
-
-
-

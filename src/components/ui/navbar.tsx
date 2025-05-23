@@ -58,13 +58,18 @@ export const Navbar = () => {
 
   const headerVariants: Variants = {
     top: {
-      // backgroundColor: "rgba(17, 17, 17, 0.8)",
+      backgroundColor: "transparent",
       // borderBottomColor: "rgba(55, 65, 81, 0.5)",
       position: "fixed",
       boxShadow: "none",
+      transition: {
+        duration: 0.3,
+        ease: "easeInOut",
+      },
     },
     scrolled: {
-      // backgroundColor:  "rgba(17, 17, 17, 0.95)",
+      backgroundColor:  "rgba(17, 17, 17, 0.95)",
+      position: "fixed",
       borderBottomColor: "rgba(75, 85, 99, 0.7)",
       boxShadow:
         "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
@@ -172,7 +177,7 @@ export const Navbar = () => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed inset-0 bg-[#111111]/95 backdrop-blur-sm shadow-lg py-4 border-t border-gray-800/50 flex items-center justify-center"
+            className="bg-[#111111]/95 backdrop-blur-sm shadow-lg py-4 border-t border-gray-800/50 flex items-center justify-center"
           >
             <div className="flex flex-col items-center space-y-4 px-6">
               <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>

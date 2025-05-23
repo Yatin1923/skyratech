@@ -51,7 +51,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #00ADB5;
+  --primary: #e76f51;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -191,4 +191,39 @@
 }
 .mil-preloader.mil-hidden {
   pointer-events: none;
+}
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #f7f7f7;
+}
+
+.section-wrapper {
+  height: 200vh; 
+  padding: 100px 0;
+  border-bottom: 2px dashed #ccc;
+}
+
+.section-label {
+  position: sticky;
+  top: 0;
+  background: transparent;
+  padding: 10px 20px;
+  font-weight: bold;
+  font-size: 18px;
+  border-bottom: 1px solid #ddd;
+  z-index: 10;
+}
+
+.box-section {
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.animated-box {
+  width: 150px;
+  height: 150px;
+  border-radius: 12px;
 }

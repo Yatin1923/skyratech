@@ -5,7 +5,7 @@ interface ButtonProps  {
   bg?: string;
   color?: string,
 }
-export  function SkButton(
+export function SkButton(
   { 
     text = "Modern Button",
     bg="white",

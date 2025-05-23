@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 // import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { Check, Star } from "lucide-react";
 import Link from "next/link";
 import { useState, useRef } from "react";
@@ -38,6 +38,85 @@ export function Services({
 }: PricingProps) {
   const [isMonthly, setIsMonthly] = useState(true);
   const switchRef = useRef<HTMLButtonElement>(null);
+  const demoPlans = [
+    {
+      name: "STARTER",
+      price: "50",
+      yearlyPrice: "40",
+      period: "per month",
+      features: [
+        "Up to 10 projects",
+        "Basic analytics",
+        "48-hour support response time",
+        "Limited API access",
+        "Community support",
+      ],
+      description: "Perfect for individuals and small projects",
+      buttonText: "Know More",
+      href: "/sign-up",
+      isPopular: false,
+    },
+    {
+      name: "STARTER",
+      price: "50",
+      yearlyPrice: "40",
+      period: "per month",
+      features: [
+        "Up to 10 projects",
+        "Basic analytics",
+        "48-hour support response time",
+        "Limited API access",
+        "Community support",
+      ],
+      description: "Perfect for individuals and small projects",
+      buttonText: "Know More",
+      href: "/sign-up",
+      isPopular: false,
+    },
+    {
+      name: "STARTER",
+      price: "50",
+      yearlyPrice: "40",
+      period: "per month",
+      features: [
+        "Up to 10 projects",
+        "Basic analytics",
+        "48-hour support response time",
+        "Limited API access",
+        "Community support",
+      ],
+      description: "Perfect for individuals and small projects",
+      buttonText: "Know More",
+      href: "/sign-up",
+      isPopular: false,
+    },
+    {
+      name: "STARTER1",
+      price: "50",
+      yearlyPrice: "40",
+      period: "per month",
+      features: [
+        "Up to 10 projects",
+        "Basic analytics",
+        "48-hour support response time",
+        "Limited API access",
+        "Community support",
+      ],
+      description: "Perfect for individuals and small projects",
+      buttonText: "Know More",
+      href: "/sign-up",
+      isPopular: false,
+    }
+  ];
+  const cardContainer = useRef<HTMLDivElement>(null);
+  const{scrollYProgress} = useScroll({
+    target: cardContainer,
+    offset: ["start center", "start start"],
+  })
+  // const y = useTransform(scrollYProgress, [0, 1],[0,100]);
+  const scale = useTransform(scrollYProgress, [0, 1], [0, 1])
+  const x = useTransform(scrollYProgress, [0, 1], [-100, 0])
+  const opacity = useTransform(scrollYProgress, [0, 1], [0, 1])
 
   const handleToggle = (checked: boolean) => {
     setIsMonthly(!checked);
@@ -69,7 +148,7 @@ export function Services({
   };
 
   return (
-    <div className="container mx-auto min-h-screen py-20 ">
+    <div ref={cardContainer} className="container mx-auto min-h-screen py-20 ">
       <div className="text-center text-white space-y-4 mb-12">
         <h2 className="text-4xl font-bold tracking-tight sm:text-5xl">
           {title}
@@ -95,39 +174,36 @@ export function Services({
         </span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 sm:2 gap-4">
-        {plans.map((plan, index) => (
+      <div  className="relative flex justify-center items-center gap-4">
+        {demoPlans.map((plan, index) => (
           <motion.div
             key={index}
-            initial={{ y: 50, opacity: 1}}
-            whileHover={{
-              // y: -10,
-              scale: 1.02,
-              transition: {
-                duration: 0.3,
-                // ease: "easeOut",
-                type:"spring"
-
-              }
-            }}
+            style={index==0?{x: useTransform(scrollYProgress, [0, 1], [-100 * (index + 1), 0]),opacity}:{x: useTransform(scrollYProgress, [0, 1], [-100 * (index + 1), 0]),opacity}}
+            // initial={{ scale:0, y: 50, opacity: 1}} 
+            // whileInView={{
+            //   scale: 1,
+            //   y: 0,
+            //   opacity: 1,
+            // }}
+            // whileHover={{
+            //   scale: 1.02,
+            // }}
             // transition={{
-            //   duration: 1.6,
+            //   duration: 0.5,
+            //   ease: "easeInOut",
             //   type: "spring",
-            //   stiffness: 100,
-            //   damping: 30,
-            //   delay: 0.4,
-            //   opacity: { duration: 0.5 },
+
             // }}
             className={cn(
               `rounded-2xl border-[1px] p-6 bg-transparent text-white text-center lg:flex lg:flex-col lg:justify-center relative border-muted-foreground `,
               "hover:border-white border-2",
               "flex flex-col",
               "hover:mt-0",
-              index === 0 || index === 2
-                ? "z-0 transform translate-x-0 translate-y-0 -translate-z-[50px] rotate-y-[10deg]"
-                : "z-10",
-              index === 0 && "origin-right",
-              index === 2 && "origin-left"
+              // index === 0 || index === 2
+              //   ? "z-0 transform translate-x-0 translate-y-0 -translate-z-[50px] rotate-y-[10deg]"
+              //   : "z-10",
+              // index === 0 && "origin-right",
+              // index === 2 && "origin-left"
             )}
           >
             {/* {plan.isPopular && (
