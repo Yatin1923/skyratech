@@ -14,10 +14,6 @@ export function ParticlesBackground(props) {
       });
     }, []);
   
-    const particlesLoaded = (container) => {
-      console.log(container);
-    };
-  
     const options = useMemo(
       () => ({
         // background: {
@@ -93,9 +89,8 @@ export function ParticlesBackground(props) {
     if (init) {
       return (
         <Particles
-          id="tsparticles"
-          className="absolute min-h-screen"
-          particlesLoaded={particlesLoaded}
+          // id="tsparticles"
+          className="absolute h-full w-full z-0"
           //init={particlesInit}
         //   particlesLoaded={particlesLoaded}
           options={options}
@@ -105,56 +100,5 @@ export function ParticlesBackground(props) {
   
     return <></>;
 }
-// const ParticlesBackground = () => {
-// //   const particlesInit = async(engine: any) => {
-// //      await loadFull(engine);
-// //   };
-
-//   return (
-//     <Particles
-//       id="tsparticles"
-//     //   init={particlesInit}
-//       options={{
-//         fullScreen: { enable: true },
-//         particles: {
-//           number: {
-//             value: 80,
-//             density: {
-//               enable: true,
-//               value_area: 800,
-//             },
-//           },
-//           color: { value: "#0000" },
-//           shape: { type: "circle" },
-//           opacity: {
-//             value: 0.5,
-//             random: false,
-//           },
-//           size: {
-//             value: 3,
-//             random: true,
-//           },
-//           move: {
-//             enable: true,
-//             speed: 2,
-//             direction: "none",
-//             out_mode: "bounce",
-//           },
-//         },
-//         interactivity: {
-//           events: {
-//             onHover: {
-//               enable: true,
-//               mode: "repulse",
-//             },
-//           },
-//         },
-//         background: {
-//           color: "#000000",
-//         },
-//       }}
-//     />
-//   );
-// };
 
 export default ParticlesBackground;

@@ -194,10 +194,16 @@
 }
 body {
   margin: 0;
-  font-family: sans-serif;
+  /* font-family: sans-serif; */
   background: #f7f7f7;
 }
+h1 {
+  font-family: var(--font-geist-mono);
+}
 
+p {
+  font-family: var(--font-geist-sans);
+}
 .section-wrapper {
   height: 200vh; 
   padding: 100px 0;
@@ -226,4 +232,8 @@ body {
   width: 150px;
   height: 150px;
   border-radius: 12px;
+}
+.outlined-text {
+  color: transparent;
+  -webkit-text-stroke: 1px rgb(255, 255, 255); /* stroke width and color */
 }

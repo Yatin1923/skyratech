@@ -1,8 +1,5 @@
 "use client";
-import InteractiveHero from "@/components/blocks/hero-section-nexus";
-import { ScrollSection } from "@/components/blocks/scroll";
-import { Services } from "@/components/blocks/services";
-import Studio from "@/components/blocks/studio-section";
+import Hero from "@/components/blocks/hero";
 import { WhyChooseUs } from "@/components/blocks/why-choose-us";
 import { Navbar } from "@/components/ui/navbar";
 import Preloader from "@/components/ui/preloader";
@@ -10,26 +7,35 @@ import { Typewriter } from "@/components/ui/typewriter";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef } from "react";
-import Lenis from '@studio-freight/lenis'
+import Lenis from "@studio-freight/lenis";
+import Solutions from "@/components/blocks/solutions";
+import Approach from "@/components/blocks/approach";
+import Services from "@/components/blocks/services/services";
+import Pricing from "@/components/blocks/pricing";
+import Stats from "@/components/blocks/stats";
+import TrustedClients from "@/components/blocks/trusted-clients";
+import ContactUs from "@/components/blocks/contact";
+import Footer from "@/components/blocks/footer";
+import RootLayout from "./layout";
 export default function Home() {
   useEffect(() => {
     const lenis = new Lenis({
       // duration: 1.2,
       // easing: (t) => Math.min(1, 1.001 - Math.pow(1, -10 * t)),
       // smoothWheel:true
-    })
+    });
 
     const raf = (time: number) => {
-      lenis.raf(time)
-      requestAnimationFrame(raf)
-    }
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    };
 
-    requestAnimationFrame(raf)
+    requestAnimationFrame(raf);
 
     return () => {
-      lenis.destroy()
-    }
-  }, [])
+      lenis.destroy();
+    };
+  }, []);
 
   const demoPlans = [
     {
@@ -119,38 +125,49 @@ export default function Home() {
   const y = useTransform(
     scrollYProgress,
     [0, 1],
-    ["0vh", "100vh"]
-    // { ease: [0.32, 0.72, 0, 1] }
+    ["0vh", "-50vh"]
   );
 
   return (
-    <div>
+    <div className="overflow-hidden">
       {/* <Preloader /> */}
-      {/* <Navbar/> */}
+      <Navbar />
       {/* <ScrollSection label="Offset: ['start start', 'end start']" offset={['start start', 'end start']} color="#FF6B6B" />
       <ScrollSection label="Offset: ['start end', 'end start']" offset={['start end', 'end start']} color="#FFD93D" />
       <ScrollSection label="Offset: ['center center', 'end center']" offset={['center center', 'end center']} color="#6BCB77" />
       <ScrollSection label="Offset: ['start start', 'start start'] (Instant)" offset={['start start', 'start start']} color="#4D96FF" /> */}
-      <div ref={container} className=" will-change-transform overflow-hidden relative">
+      <div className="will-change-transform overflow-hidden relative">
         <motion.div>
-          <InteractiveHero/>
+          <Hero />
         </motion.div>
         {/* <motion.div style={{y}} className="bg-[#EEEEEE]">
           <Studio />
         </motion.div> */}
       </div>
       <div className="bg-[#EEEEEE]">
-        <Studio />
+        <Solutions />
       </div>
       <div className="bg-[#000]">
-        <Services
-          plans={demoPlans}
-          title="Simple, Transparent Pricing"
-          description="Choose the plan that works for you\nAll plans include access to our platform, lead generation tools, and dedicated support."
-        />
+        <Approach />
       </div>
-      <WhyChooseUs />
-      {/* <ParallaxSection/> */}
+      <div className="bg-[#0E0E0E]">
+        <Services />
+      </div>
+      {/* <Pricing /> */}
+      <div className="bg-black text-white">
+        <Stats />
+      </div>
+      <div ref={container} className="will-change-transform overflow-hidden relative">
+        <TrustedClients />
+      </div>
+      <motion.div className="bg-black rounded-t-2xl">
+        <ContactUs />
+      </motion.div>
+      <motion.div className="bg-black text-white">
+        <Footer />
+      </motion.div>
+
     </div>
+
   );
 }
